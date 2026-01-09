@@ -1,0 +1,7 @@
+{
+  "name": "Walker V.2 React.js (Vibe-Assisted)",
+  "description": "A comprehensive walking companion featuring a route planner, personal journal, and habit tracker to help you maintain a healthy lifestyle.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
