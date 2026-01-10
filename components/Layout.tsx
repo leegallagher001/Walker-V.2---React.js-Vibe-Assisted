@@ -48,12 +48,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </nav>
 
-      <main className="flex-grow container mx-auto px-4 py-8 mb-24">
+      <main className="flex-grow container mx-auto px-4 py-8 mb-32">
         {children}
       </main>
 
-      <footer className="fixed bottom-0 left-0 w-full bg-[#5E4C06] text-[#F4F0E4] py-4 text-center z-40">
-        <h2 className="text-sm md:text-base font-medium">Walker - Created by Lee Gallagher 2025</h2>
+      <footer className="fixed bottom-0 left-0 w-full bg-[#5E4C06] text-[#F4F0E4] py-6 text-center z-40 border-t border-white/10">
+        <h2 className="text-xl md:text-3xl font-bold tracking-tight">
+          Created by Lee Gallagher 2025
+        </h2>
       </footer>
     </div>
   );

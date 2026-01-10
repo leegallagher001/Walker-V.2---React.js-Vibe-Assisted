@@ -125,8 +125,10 @@ const Planner: React.FC = () => {
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold mb-6 text-[#5E4C06]">PLANNER</h2>
         <div className="space-y-4 text-lg max-w-3xl mx-auto">
-          <p>Don't worry about finding a trail. Tell us where you are and how much time you have.</p>
-          <p>We'll find a destination exactly half-way through your time, so you can turn around and head back home right on schedule.</p>
+            <p>A fast-paced job. A busy family. Bills to pay, mouths to feed, a car to fix. In the modern day, time is a luxury.</p>
+            <p>But health is wealth. Studies show that even a short amount of walking each day can be incredibly beneficial to one's health, cutting the risk of all causes of mortality significantly.</p>
+            <p>However, it is sometimes a challenge to come up with a good walking route in your local area, or perhaps you have walked the same trail many times and want something different.</p>
+            <p>Not to worry. Let <b>Planner</b> do the hard work for you.</p>
         </div>
       </div>
 

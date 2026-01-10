@@ -1,6 +1,49 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { JournalEntry } from '../types';
+
+const JournalEntryCard: React.FC<{ entry: JournalEntry }> = ({ entry }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div 
+      className="bg-[#F4F0E4] rounded-[40px] border border-black/10 shadow-lg p-6 md:p-8 transition-all duration-300 hover:shadow-xl group"
+    >
+      <div 
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex flex-col md:flex-row md:items-baseline md:gap-4">
+          <h3 className="text-2xl md:text-3xl font-bold text-[#5E4C06] group-hover:text-[#5FB37A] transition-colors">
+            {entry.title}
+          </h3>
+          <span className="text-lg md:text-xl text-[#5E4C06]/60 font-semibold italic">
+            {new Date(entry.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+          </span>
+        </div>
+        
+        <button 
+          className={`text-3xl md:text-4xl font-bold w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${isExpanded ? 'bg-[#5E4C06] text-[#F4F0E4] border-[#5E4C06] rotate-45' : 'bg-white text-[#5E4C06] border-[#5E4C06]/20 group-hover:border-[#5FB37A] group-hover:text-[#5FB37A]'}`}
+          aria-expanded={isExpanded}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+        >
+          &#43;
+        </button>
+      </div>
+
+      {isExpanded && (
+        <div className="mt-6 pt-6 border-t border-black/10 fade-in">
+          <p className="text-xl leading-relaxed whitespace-pre-wrap text-[#532D02] italic">
+            {entry.article}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Journal: React.FC = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -11,11 +54,8 @@ const Journal: React.FC = () => {
     article: ''
   });
 
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation: prevent empty entries
     if (!formData.title || !formData.date || !formData.article) return;
 
     const newEntry: JournalEntry = {
@@ -23,92 +63,94 @@ const Journal: React.FC = () => {
       ...formData
     };
 
-    // Correct logic: Add to list of entries instead of manually appending to DOM
     setEntries([newEntry, ...entries]);
-
-    // Reset form
     setFormData({ title: '', date: '', article: '' });
     setIsFormVisible(false);
   };
 
   return (
-    <div className="fade-in max-w-6xl mx-auto">
+    <div className="fade-in max-w-6xl mx-auto pb-24">
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold mb-6 text-[#5E4C06]">JOURNAL</h2>
         <div className="space-y-4 text-lg max-w-3xl mx-auto mb-8">
-          <p>The great outdoors. The great adventure. The sights and sounds. Day or night.</p>
-          <p>Wherever or whenever your walk may be, trust <strong>Journal</strong> to record your precious walking memories.</p>
+            <p>The great outdoors. The great adventure. The sights and sounds. Day or night.</p>
+            <p>Perhaps it's the idyllic charm of the countryside or the village - the chirping of birds, the green of the trees and bushes and grasses.</p>
+            <p>Or maybe it's the more concrete jungle of the city - the hustle and bustle of the traffic and crowds, the smells of street food and the bright lights and tall buildings.</p>
+            <p>Wherever or whenever your walk may be, trust <b>Journal</b> to record your precious walking memories...or perhaps just your latest personal best.</p>
         </div>
       </div>
 
-      <div className="bg-white/50 p-6 md:p-10 rounded-[40px] border border-black/10 shadow-2xl min-h-[400px]">
-        <div className="flex justify-center mb-10">
-          <div className="w-full md:w-2/3 p-8 bg-[#F4F0E4] rounded-3xl shadow-lg border border-black/10">
-            <div 
-              className="text-6xl text-center py-4 cursor-pointer hover:bg-[#5E4C06] hover:text-[#FFF6D2] rounded-3xl transition-all duration-300 active:opacity-50"
-              onClick={() => setIsFormVisible(!isFormVisible)}
-            >
-              <button className="w-full text-center">&#43;</button>
-            </div>
+      <div className="bg-white/50 p-6 md:p-10 rounded-[40px] border border-black/10 shadow-2xl min-h-[500px]">
+        {/* Toggle Button Area */}
+        <div className="flex flex-col items-center mb-16">
+          <button 
+            onClick={() => setIsFormVisible(!isFormVisible)}
+            className={`group relative flex items-center justify-center w-24 h-24 rounded-full transition-all duration-500 shadow-lg border-4 ${isFormVisible ? 'bg-[#5E4C06] border-[#FFF6D2] rotate-45' : 'bg-[#5FB37A] border-white hover:bg-[#5E4C06] hover:scale-110'}`}
+          >
+            <span className="text-5xl font-bold text-white">&#43;</span>
+            {!isFormVisible && (
+              <span className="absolute -bottom-10 whitespace-nowrap text-sm font-bold tracking-[0.3em] text-[#5E4C06] opacity-0 group-hover:opacity-100 transition-opacity uppercase">New Entry</span>
+            )}
+          </button>
 
-            {isFormVisible && (
-              <form onSubmit={handleSubmit} className="mt-8 space-y-6 fade-in">
+          {isFormVisible && (
+            <div className="w-full md:w-2/3 mt-12 p-8 bg-[#F4F0E4] rounded-[40px] shadow-xl border border-black/10 fade-in">
+              <h3 className="text-2xl font-bold mb-8 text-[#5E4C06] italic text-center">Record a New Memory</h3>
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-xl font-semibold mb-2">Entry Title:</label>
+                  <label className="block text-[10px] font-black text-[#5E4C06]/40 uppercase tracking-[0.2em] mb-2 ml-1">Entry Title</label>
                   <input 
                     type="text" 
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="Your Entry Title Here"
-                    className="w-full p-4 rounded-xl border border-black/20 text-lg focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] placeholder:text-[#F4F0E4]/60 transition-all duration-300"
+                    placeholder="E.g. Morning Mist at the Lake"
+                    className="w-full p-4 rounded-xl border border-black/20 text-lg focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] placeholder:text-[#F4F0E4]/40 transition-all duration-300 shadow-inner"
                   />
                 </div>
                 <div>
-                  <label className="block text-xl font-semibold mb-2">Entry Date:</label>
+                  <label className="block text-[10px] font-black text-[#5E4C06]/40 uppercase tracking-[0.2em] mb-2 ml-1">Entry Date</label>
                   <input 
                     type="date" 
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    className="w-full p-4 rounded-xl border border-black/20 text-lg focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] [color-scheme:dark] transition-all duration-300"
+                    className="w-full p-4 rounded-xl border border-black/20 text-lg focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] [color-scheme:dark] transition-all duration-300 shadow-inner"
                   />
                 </div>
                 <div>
-                  <label className="block text-xl font-semibold mb-2">Enter Your Journal Entry:</label>
+                  <label className="block text-[10px] font-black text-[#5E4C06]/40 uppercase tracking-[0.2em] mb-2 ml-1">The Story</label>
                   <textarea 
-                    rows={4}
+                    rows={6}
                     value={formData.article}
                     onChange={(e) => setFormData({...formData, article: e.target.value})}
-                    placeholder="Your Journal Entry Here"
-                    className="w-full p-4 rounded-xl border border-black/20 text-lg focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] placeholder:text-[#F4F0E4]/60 transition-all duration-300"
+                    placeholder="Describe your walk..."
+                    className="w-full p-4 rounded-xl border border-black/20 text-lg focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] placeholder:text-[#F4F0E4]/40 transition-all duration-300 shadow-inner"
                   />
                 </div>
                 <button 
                   type="submit" 
-                  className="w-full bg-[#5E4C06] text-[#F4F0E4] py-4 rounded-xl text-2xl font-bold border-2 border-[#FFF6D2] hover:bg-[#5FB37A] transition-colors shadow-md"
+                  className="w-full bg-[#5E4C06] text-[#F4F0E4] py-4 rounded-2xl text-2xl font-bold border-2 border-[#FFF6D2] hover:bg-[#5FB37A] transition-all shadow-lg active:scale-95 mt-4"
                 >
-                  Save Entry!
+                  Save to Journal
                 </button>
               </form>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Entries Display: Each entry is its own component instance */}
-        <div className="space-y-12">
+        <div className="space-y-8">
+          <div className="flex items-center gap-6 mb-12">
+            <div className="h-[2px] flex-grow bg-[#5E4C06]/10"></div>
+            <h3 className="text-sm font-black uppercase tracking-[0.4em] text-[#5E4C06]/30">Your Previous Walking Adventures</h3>
+            <div className="h-[2px] flex-grow bg-[#5E4C06]/10"></div>
+          </div>
+          
           {entries.length === 0 ? (
-            <p className="text-center text-gray-500 italic py-10">No entries yet. Click the plus button to start your journey.</p>
+            <div className="text-center py-24 bg-black/5 rounded-[40px] border-2 border-dashed border-[#5E4C06]/10">
+              <p className="text-2xl text-[#5E4C06]/30 italic font-medium">Your journal is empty. Let's record your first walk.</p>
+            </div>
           ) : (
             entries.map((entry) => (
-              <div 
-                key={entry.id} 
-                className="bg-[#F4F0E4] rounded-3xl border border-black/20 shadow-[10px_10px_10px_rgba(0,0,0,0.1)] p-8 fade-in"
-              >
-                <div className="flex flex-col md:flex-row md:items-baseline md:justify-between mb-4 border-b border-black/10 pb-2">
-                  <h3 className="text-3xl font-bold text-[#5E4C06]">{entry.title}</h3>
-                  <span className="text-xl text-[#5E4C06]/70 font-semibold">{new Date(entry.date).toLocaleDateString()}</span>
-                </div>
-                <p className="text-xl leading-relaxed whitespace-pre-wrap">{entry.article}</p>
-              </div>
+              <JournalEntryCard key={entry.id} entry={entry} />
             ))
           )}
         </div>
