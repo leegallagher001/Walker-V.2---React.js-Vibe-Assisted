@@ -4,6 +4,7 @@ export interface JournalEntry {
   title: string;
   date: string;
   article: string;
+  steps?: string;
 }
 
 export interface PlannerRoute {
