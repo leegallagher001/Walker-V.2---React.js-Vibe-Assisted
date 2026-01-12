@@ -1,29 +1,32 @@
 
 import React, { useState, useEffect } from 'react';
+import { StorageService } from '../services/storage';
 
 interface HabitGoal {
   steps: number;
   days: number;
-  completedDays: number[]; // Indices of the days relative to startDate
-  startDate: string; // ISO string of the day the goal was started
+  completedDays: number[];
+  startDate: string;
 }
 
 const Habit: React.FC = () => {
   const [stepInput, setStepInput] = useState<string>('10000');
   const [daysInput, setDaysInput] = useState<string>('30');
   const [goal, setGoal] = useState<HabitGoal | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load goal from local storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('walker_habit_goal');
-    if (saved) {
-      setGoal(JSON.parse(saved));
-    }
+    const loadGoal = async () => {
+      const savedGoal = await StorageService.getHabitGoal();
+      setGoal(savedGoal);
+      setLoading(false);
+    };
+    loadGoal();
   }, []);
 
-  const handleSetGoal = (e: React.FormEvent) => {
+  const handleSetGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Normalize start date to midnight to make date comparisons easier
+    setLoading(true);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     
@@ -33,8 +36,10 @@ const Habit: React.FC = () => {
       completedDays: [],
       startDate: now.toISOString()
     };
+    
+    await StorageService.saveHabitGoal(newGoal);
     setGoal(newGoal);
-    localStorage.setItem('walker_habit_goal', JSON.stringify(newGoal));
+    setLoading(false);
   };
 
   const isToday = (date: Date) => {
@@ -50,29 +55,29 @@ const Habit: React.FC = () => {
     return date;
   };
 
-  const toggleDay = (dayIndex: number) => {
+  const toggleDay = async (dayIndex: number) => {
     if (!goal) return;
     
     const targetDate = getDateForIndex(dayIndex, goal.startDate);
+    if (!isToday(targetDate)) return;
     
-    // Check if it's actually today
-    if (!isToday(targetDate)) {
-      return; // Only today can be toggled
-    }
-    
+    setLoading(true);
     const newCompletedDays = goal.completedDays.includes(dayIndex)
       ? goal.completedDays.filter(d => d !== dayIndex)
       : [...goal.completedDays, dayIndex];
     
     const updatedGoal = { ...goal, completedDays: newCompletedDays };
+    await StorageService.saveHabitGoal(updatedGoal);
     setGoal(updatedGoal);
-    localStorage.setItem('walker_habit_goal', JSON.stringify(updatedGoal));
+    setLoading(false);
   };
 
-  const resetGoal = () => {
+  const resetGoal = async () => {
     if (window.confirm("Are you sure you want to reset your current journey?")) {
+      setLoading(true);
+      await StorageService.clearHabitGoal();
       setGoal(null);
-      localStorage.removeItem('walker_habit_goal');
+      setLoading(false);
     }
   };
 
@@ -82,14 +87,22 @@ const Habit: React.FC = () => {
         <h2 className="text-4xl font-bold mb-6 text-[#5E4C06]">HABIT</h2>
         <div className="space-y-4 text-lg max-w-3xl mx-auto mb-8">
             <p>A clear head. Structure. A plan. A lifestyle.</p>
-            <p>In the modern day, these things can seem like a virtual impossibility. We all have busy lives, filled with work, family commitments, looking after the home and ourselves.</p>
-            <p>And that is to say nothing of hobbies. Of course, walking can be one of the best hobbies out there - free, healthy, low-pressure and accessible. However, in our busy lives, even setting aside a little time can seem like a daunting task.</p>
-            <p>Not to worry - let <b>Habit</b> be your new walking coach. Set your goals - or your availability - and let it set up a plan you can stick to.</p>
+            <p>Not to worry - let <b>Habit</b> be your new walking coach. Set your goals and let it set up a plan you can stick to.</p>
         </div>
       </div>
 
-      <div className="bg-white/50 p-6 md:p-10 rounded-[40px] border border-black/10 shadow-2xl min-h-[500px]">
-        {!goal ? (
+      <div className="bg-white/50 p-6 md:p-10 rounded-[40px] border border-black/10 shadow-2xl min-h-[500px] relative">
+        {loading && (
+          <div className="absolute top-6 right-6 flex items-center gap-2 text-[#5E4C06]/40 font-bold text-xs uppercase tracking-widest bg-white/40 px-4 py-2 rounded-full z-10">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Syncing...
+          </div>
+        )}
+
+        {!goal && !loading ? (
           <div className="max-w-2xl mx-auto">
             <div className="bg-[#F4F0E4] p-8 md:p-12 rounded-[40px] shadow-xl border border-black/10 fade-in">
               <h3 className="text-2xl font-bold mb-8 text-[#5E4C06] italic text-center uppercase tracking-widest">Define Your Journey</h3>
@@ -100,8 +113,7 @@ const Habit: React.FC = () => {
                     type="number" 
                     value={stepInput}
                     onChange={(e) => setStepInput(e.target.value)}
-                    placeholder="e.g. 10000"
-                    className="w-full p-5 rounded-2xl border border-black/10 text-2xl focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] transition-all shadow-inner font-bold"
+                    className="w-full p-5 rounded-2xl border border-black/10 text-2xl focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] font-bold"
                   />
                 </div>
                 <div>
@@ -110,8 +122,7 @@ const Habit: React.FC = () => {
                     type="number" 
                     value={daysInput}
                     onChange={(e) => setDaysInput(e.target.value)}
-                    placeholder="e.g. 30"
-                    className="w-full p-5 rounded-2xl border border-black/10 text-2xl focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] transition-all shadow-inner font-bold"
+                    className="w-full p-5 rounded-2xl border border-black/10 text-2xl focus:outline-none focus:ring-2 focus:ring-[#5FB37A] bg-[#5E4C06] text-[#F4F0E4] font-bold"
                   />
                 </div>
                 <button 
@@ -123,7 +134,7 @@ const Habit: React.FC = () => {
               </form>
             </div>
           </div>
-        ) : (
+        ) : goal && (
           <div className="fade-in">
             <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-16">
               <div className="text-center md:text-left">
@@ -158,12 +169,11 @@ const Habit: React.FC = () => {
                   const isComp = goal.completedDays.includes(i);
                   const current = isToday(date);
                   const isPast = date < new Date() && !current;
-                  const isFuture = date > new Date() && !current;
 
                   return (
                     <button
                       key={i}
-                      disabled={!current}
+                      disabled={!current || loading}
                       onClick={() => toggleDay(i)}
                       className={`relative min-h-[100px] p-4 rounded-3xl flex flex-col items-start justify-between transition-all duration-300 border-2 ${
                         isComp 
@@ -171,7 +181,7 @@ const Habit: React.FC = () => {
                         : current 
                           ? 'bg-white border-[#5FB37A] text-[#5E4C06] shadow-md ring-4 ring-[#5FB37A]/10' 
                           : 'bg-[#F4F0E4]/50 border-[#5E4C06]/5 text-[#5E4C06]/30'
-                      } ${!current ? 'cursor-default grayscale-[0.5]' : 'hover:scale-105 active:scale-95 cursor-pointer'}`}
+                      } ${!current || loading ? 'cursor-default grayscale-[0.5]' : 'hover:scale-105 active:scale-95 cursor-pointer'}`}
                     >
                       <div className="flex flex-col items-start">
                         <span className={`text-[10px] font-black uppercase tracking-tighter ${isComp ? 'text-white/70' : 'text-[#5E4C06]/40'}`}>
@@ -179,9 +189,6 @@ const Habit: React.FC = () => {
                         </span>
                         <span className="text-2xl font-bold leading-none">
                           {date.getDate()}
-                        </span>
-                        <span className={`text-[10px] font-bold uppercase ${isComp ? 'text-white/70' : 'text-[#5E4C06]/40'}`}>
-                          {date.toLocaleDateString(undefined, { month: 'short' })}
                         </span>
                       </div>
                       
@@ -196,10 +203,6 @@ const Habit: React.FC = () => {
                           <span className="text-[8px] font-black opacity-30 italic">LOCKED</span>
                         )}
                       </div>
-
-                      {current && !isComp && (
-                        <div className="absolute top-2 right-2 w-2 h-2 bg-[#5FB37A] rounded-full"></div>
-                      )}
                     </button>
                   );
                 })}
@@ -216,7 +219,7 @@ const Habit: React.FC = () => {
                     <p className="text-xl font-semibold">
                       {goal.completedDays.length === goal.days 
                         ? "Expedition Complete! Well done." 
-                        : `${goal.days - goal.completedDays.length} days remaining to reach your goal.`}
+                        : `${goal.days - goal.completedDays.length} days remaining.`}
                     </p>
                 </div>
             </div>

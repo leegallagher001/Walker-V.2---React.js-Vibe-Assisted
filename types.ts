@@ -1,4 +1,10 @@
 
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
 export interface JournalEntry {
   id: string;
   title: string;
